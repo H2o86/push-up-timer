@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push-up Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="app" class="app-container">
+        
+        <!-- LOGIN SCREEN -->
+        <div id="login-screen" class="screen active">
+            <h1>Welcome</h1>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Enter your name to track progress</p>
+            <div class="input-group">
+                <label for="username-input">Your Name</label>
+                <input type="text" id="username-input" placeholder="e.g. John Doe">
+            </div>
+            <button id="btn-login" class="btn btn-primary">Continue</button>
+        </div>
+
+        <!-- DASHBOARD SCREEN -->
+        <div id="dashboard-screen" class="screen">
+            <h1 style="font-size: 2rem; margin-bottom: 1rem;">Hello, <span id="display-username">User</span>!</h1>
+            
+            <div class="dashboard-stats">
+                <div class="dash-stat">
+                    <span class="dash-value" id="dash-total-reps">0</span>
+                    <span class="dash-label">Total Push-ups</span>
+                </div>
+                <div class="dash-stat">
+                    <span class="dash-value" id="dash-total-workouts">0</span>
+                    <span class="dash-label">Workouts</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="consistencyChart"></canvas>
+            </div>
+
+            <button id="btn-new-workout" class="btn btn-primary">Start New Workout</button>
+            <button id="btn-logout" class="btn btn-secondary" style="margin-top: 0.5rem; padding: 0.8rem; font-size: 1rem;">Change User</button>
+        </div>
+
+        <!-- SETUP SCREEN -->
+        <div id="setup-screen" class="screen">
+            <h1>Workout Setup</h1>
+            <div class="input-group">
+                <label for="min-reps">Min Reps</label>
+                <input type="number" id="min-reps" value="5" min="1">
+            </div>
+            <div class="input-group">
+                <label for="step">Step (Increase/Decrease)</label>
+                <input type="number" id="step" value="2" min="1">
+            </div>
+            <div class="input-group">
+                <label for="max-reps">Max Reps</label>
+                <input type="number" id="max-reps" value="15" min="1">
+            </div>
+            <button id="btn-start" class="btn btn-primary">Start</button>
+            <button id="btn-back-dash" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+
+        <!-- WORKOUT SCREEN -->
+        <div id="workout-screen" class="screen">
+            <h2 class="subtitle">Set <span id="set-number">1</span></h2>
+            <div class="rep-display">
+                <span class="rep-count" id="target-reps">5</span>
+                <span class="rep-label">Reps</span>
+            </div>
+            <div class="stopwatch-display">
+                <span id="stopwatch">00:00</span>
+            </div>
+            <button id="btn-done" class="btn btn-action">Done (Start Rest)</button>
+        </div>
+
+        <!-- REST SCREEN -->
+        <div id="rest-screen" class="screen">
+            <h2 class="subtitle">Rest Time</h2>
+            <div class="timer-display">
+                <span id="countdown">00:00</span>
+            </div>
+            <p class="next-up">Next: <span id="next-reps">7</span> reps</p>
+            <button id="btn-skip-rest" class="btn btn-secondary">Skip Rest</button>
+        </div>
+
+        <!-- FINISHED SCREEN -->
+        <div id="finished-screen" class="screen">
+            <h1>Workout Complete!</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-reps">0</span>
+                    <span class="stat-label">Total Reps</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="total-time">00:00</span>
+                    <span class="stat-label">Total Time</span>
+                </div>
+            </div>
+            <button id="btn-save-finish" class="btn btn-primary">Save & Return</button>
+        </div>
+
+    </div>
+
+    <!-- Audio for beep -->
+    <audio id="beep-audio" preload="auto"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
