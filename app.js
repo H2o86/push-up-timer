@@ -55,10 +55,10 @@ document.addEventListener('visibilitychange', async () => {
 // --- App State ---
 const state = {
     currentUser: null,
-    minReps: 5,
-    step: 2,
-    maxReps: 10,
-    currentReps: 5,
+    minReps: 12,
+    step: 3,
+    maxReps: 25,
+    currentReps: 12,
     direction: 1, // 1 for UP, -1 for DOWN
     setCount: 1,
     totalReps: 0,
