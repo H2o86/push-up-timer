@@ -1,72 +1,340 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Push-up Timer</title>
+    <title>Push-up Timer Pro</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <!-- Chart.js for Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div id="app" class="app-container">
-        
-        <!-- LOGIN SCREEN -->
-        <div id="login-screen" class="screen active">
-            <h1>Welcome</h1>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Enter your name to track progress</p>
-            <div class="input-group">
-                <label for="username-input">Your Name</label>
-                <input type="text" id="username-input" placeholder="e.g. John Doe">
+        <!-- AUTH SCREEN -->
+        <div id="auth-screen" class="screen active">
+            <h1 id="auth-title">Đăng Nhập</h1>
+            <p class="auth-subtitle" id="auth-desc">Nhập tài khoản để lưu lịch sử và xếp hạng</p>
+
+            <!-- GOOGLE SIGN IN BUTTON -->
+            <button id="btn-google-login" class="btn btn-google">
+                <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
+                </svg>
+                <span>Đăng Nhập Với Google</span>
+            </button>
+
+            <div class="auth-divider">
+                <span>hoặc dùng tài khoản</span>
             </div>
-            <button id="btn-login" class="btn btn-primary">Continue</button>
+
+            <div class="auth-tabs">
+                <button id="tab-btn-login" class="tab-toggle active">Đăng Nhập</button>
+                <button id="tab-btn-register" class="tab-toggle">Đăng Ký Mới</button>
+            </div>
+
+            <div class="input-group">
+                <label for="auth-username">Tên người dùng</label>
+                <input type="text" id="auth-username" placeholder="Ví dụ: TienDung" autocomplete="username">
+            </div>
+
+            <div class="input-group" id="group-auth-email" style="display: none;">
+                <label for="auth-email">Địa chỉ Email (Xác nhận/Khôi phục)</label>
+                <input type="email" id="auth-email" placeholder="example@gmail.com" autocomplete="email">
+            </div>
+
+            <div class="input-group">
+                <div class="label-row">
+                    <label for="auth-pin" id="label-auth-pin">Mật khẩu (hoặc PIN)</label>
+                    <button type="button" id="btn-gen-pass" class="btn-text-link" style="display: none;">🎲 Tạo Mật Khẩu Mạnh</button>
+                </div>
+                <input type="password" id="auth-pin" placeholder="Nhập mật khẩu" autocomplete="current-password">
+                
+                <!-- PASSWORD STRENGTH METER -->
+                <div id="password-strength-container" class="strength-container" style="display: none;">
+                    <div class="strength-bar-bg">
+                        <div id="strength-bar" class="strength-bar-fill"></div>
+                    </div>
+                    <span id="strength-text" class="strength-label">Độ mạnh: Chưa nhập</span>
+                </div>
+            </div>
+
+            <div class="auth-extra-links">
+                <button type="button" id="btn-forgot-pass" class="btn-text-link">🔑 Quên mật khẩu?</button>
+            </div>
+
+            <button id="btn-auth-submit" class="btn btn-primary">Tiếp Tục</button>
+
         </div>
 
-        <!-- DASHBOARD SCREEN -->
-        <div id="dashboard-screen" class="screen">
-            <h1 style="font-size: 2rem; margin-bottom: 1rem;">Hello, <span id="display-username">User</span>!</h1>
-            
-            <div class="dashboard-stats">
-                <div class="dash-stat">
-                    <span class="dash-value" id="dash-total-reps">0</span>
-                    <span class="dash-label">Total Push-ups</span>
+        <!-- MAIN APP SCREEN -->
+        <div id="main-screen" class="screen">
+            <div class="user-header">
+                <div class="user-header-left">
+                    <h2>Xin chào, <span id="display-username" class="gradient-text">User</span>!</h2>
+                    <span id="header-streak-badge" class="streak-badge" title="Chuỗi ngày tập liên tục">🔥 0 ngày</span>
                 </div>
-                <div class="dash-stat">
-                    <span class="dash-value" id="dash-total-workouts">0</span>
-                    <span class="dash-label">Workouts</span>
+                <button id="btn-logout" class="btn-icon" title="Đăng xuất">🚪</button>
+            </div>
+
+            <!-- TOP NAVIGATION BAR -->
+            <div class="main-nav">
+                <button class="nav-item active" data-tab="tab-dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Cá Nhân</span>
+                </button>
+                <button class="nav-item" data-tab="tab-leaderboard">
+                    <span class="nav-icon">🏆</span>
+                    <span class="nav-text">Xếp Hạng</span>
+                </button>
+                <button class="nav-item" data-tab="tab-settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Cài Đặt</span>
+                </button>
+                <button class="nav-item" data-tab="tab-guide">
+                    <span class="nav-icon">📘</span>
+                    <span class="nav-text">Hướng Dẫn</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-stats">
+                    <div class="dash-stat">
+                        <span class="dash-value" id="dash-total-reps">0</span>
+                        <span class="dash-label">Tổng Push-up</span>
+                    </div>
+                    <div class="dash-stat">
+                        <span class="dash-value" id="dash-total-workouts">0</span>
+                        <span class="dash-label">Buổi Tập</span>
+                    </div>
+                    <div class="dash-stat">
+                        <span class="dash-value" id="dash-total-calories">0</span>
+                        <span class="dash-label">Calo (kcal)</span>
+                    </div>
+                    <div class="dash-stat">
+                        <span class="dash-value" id="dash-current-streak">0</span>
+                        <span class="dash-label">Streak (Ngày)</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="consistencyChart"></canvas>
+                </div>
+                <button id="btn-go-workout" class="btn btn-primary">Bắt Đầu Buổi Tập Mới 🔥</button>
+            </div>
+
+            <!-- TAB 2: LEADERBOARD -->
+            <div id="tab-leaderboard" class="tab-content">
+                <div class="tab-header">
+                    <h2>Bảng Xếp Hạng 🏆</h2>
+                    <button id="btn-refresh-rank" class="btn-icon" title="Làm mới">🔄</button>
+                </div>
+                <div class="filter-pills" id="rank-filter-pills">
+                    <button class="filter-pill active" data-period="all">Tất cả</button>
+                    <button class="filter-pill" data-period="week">Tuần này</button>
+                    <button class="filter-pill" data-period="month">Tháng này</button>
+                    <button class="filter-pill" data-period="year">Năm này</button>
+                </div>
+                <div class="leaderboard-list" id="leaderboard-container">
+                    <div class="loading-spinner">Đang tải dữ liệu xếp hạng...</div>
                 </div>
             </div>
 
-            <div class="chart-container">
-                <canvas id="consistencyChart"></canvas>
+            <!-- TAB 3: SETTINGS -->
+            <div id="tab-settings" class="tab-content">
+                <div class="tab-header">
+                    <h2>Cài Đặt Mặc Định ⚙️</h2>
+                </div>
+                <div class="settings-card">
+                    <p class="settings-desc">Cấu hình các chỉ số mặc định khi bạn bắt đầu một buổi tập mới:</p>
+                    <div class="input-group">
+                        <label for="setting-min">Số Rep Tối Thiểu (Min)</label>
+                        <input type="number" id="setting-min" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="setting-step">Số Rep Gia / Giảm (Step)</label>
+                        <input type="number" id="setting-step" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="setting-max">Số Rep Tối Đa (Max)</label>
+                        <input type="number" id="setting-max" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="setting-weight">Cân Nặng Của Bạn (kg)</label>
+                        <input type="number" id="setting-weight" min="30" max="200" value="65">
+                    </div>
+                    <div class="input-group toggle-input-group">
+                        <label for="setting-voice-enable" class="toggle-label">
+                            <span>🗣️ Giọng Nói Hướng Dẫn (Voice Coach)</span>
+                            <input type="checkbox" id="setting-voice-enable" checked>
+                        </label>
+                    </div>
+                    <button id="btn-save-settings" class="btn btn-primary" style="margin-top: 1rem;">Lưu Cài Đặt</button>
+                </div>
+
+                <!-- ADMIN API CONFIG CARD -->
+                <div class="settings-card admin-card" style="margin-top: 1rem;">
+                    <div class="admin-header">
+                        <span class="admin-icon">🔑</span>
+                        <div class="admin-title-box">
+                            <h3>Cấu Hình Server Backend (Admin)</h3>
+                            <p class="admin-desc">Cập nhật URL Web App Google Apps Script khi bạn deploy lại cơ sở dữ liệu Google Sheet mới:</p>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="setting-api-url">Google Apps Script Web App URL</label>
+                        <input type="url" id="setting-api-url" placeholder="https://script.google.com/macros/s/.../exec">
+                    </div>
+                    <div class="admin-actions-row">
+                        <button id="btn-test-api" class="btn btn-secondary">🔍 Test</button>
+                        <button id="btn-reset-api" class="btn btn-secondary">🔄 Mặc Định</button>
+                        <button id="btn-save-api" class="btn btn-primary">💾 Lưu URL</button>
+                    </div>
+                    <div id="api-test-status" class="api-status-msg" style="display: none;"></div>
+                </div>
+
+                <!-- ABOUT & AUTHOR CARD -->
+                <div class="settings-card about-card" style="margin-top: 1rem;">
+                    <div class="about-header">
+                        <span class="about-icon">💪</span>
+                        <div class="about-title-box">
+                            <h3>Push-up Timer Pro</h3>
+                            <span class="version-badge">v1.2.0 • Pro Edition</span>
+                        </div>
+                    </div>
+                    <p class="about-desc">
+                        Ứng dụng hỗ trợ đếm giờ và quản lý lịch trình rèn luyện chống đẩy theo phương pháp kim tự tháp (Pyramid Workout). Tự động theo dõi sự tiến bộ và tính kiên trì của bạn mỗi ngày.
+                    </p>
+                    <div class="author-info">
+                        <span>✍️ Tác giả: <strong>HA19 Team</strong></span>
+                    </div>
+                    <a href="mailto:ha19.bqp@gmail.com?subject=G%C3%B3p%20%C3%BD%20cho%20Push-up%20Timer%20Pro" class="btn btn-cta-feedback">
+                        ✉️ Gửi Góp Ý Qua Email
+                    </a>
+                    <span class="email-address">Email: ha19.bqp@gmail.com</span>
+                </div>
             </div>
 
-            <button id="btn-new-workout" class="btn btn-primary">Start New Workout</button>
-            <button id="btn-logout" class="btn btn-secondary" style="margin-top: 0.5rem; padding: 0.8rem; font-size: 1rem;">Change User</button>
+            <!-- TAB 4: GUIDE -->
+            <div id="tab-guide" class="tab-content">
+                <div class="tab-header">
+                    <h2>Hướng Dẫn Tập Luyện 📘</h2>
+                </div>
+                
+                <!-- SECTION 1: WARM UP -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-card-icon">🔥</span>
+                        <h3>1. Khởi Động Trước Khi Tập (Warm-up)</h3>
+                    </div>
+                    <p class="guide-card-desc">Khởi động 3-5 phút giúp làm nóng cơ bắp, tăng lưu thông máu và phòng tránh chấn thương vai, cổ tay:</p>
+                    <ul class="guide-list">
+                        <li><strong>Xoay cổ tay & cổ chân:</strong> 15-20 vòng mỗi bên để bôi trơn các khớp nhỏ.</li>
+                        <li><strong>Xoay vai & mở ngực:</strong> Dang rộng tay xoay tròn 15 vòng xuôi và ngược chiều.</li>
+                        <li><strong>Arm Swing (Đánh tay ép ngực):</strong> Đánh tay ra sau và đan chéo trước ngực 20 lần.</li>
+                        <li><strong>Plank tĩnh 30 giây:</strong> Kích hoạt cơ lõi (core) và ổn định sống lưng.</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 2: BREATHING TECHNIQUE -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-card-icon">🫁</span>
+                        <h3>2. Nguyên Tắc Nắm Giữ Nhịp Thở</h3>
+                    </div>
+                    <p class="guide-card-desc">Nhịp thở đúng giúp tối ưu oxy cho cơ bắp và gồng nén lực tốt hơn khi đẩy:</p>
+                    <div class="breath-rules">
+                        <div class="breath-box inhale">
+                            <span class="breath-tag">HÍT VÀO ⬇️</span>
+                            <p>Khi <strong>HẠ NGƯỜI XUỐNG</strong> (Cơ ngực giãn ra - Pha âm)</p>
+                        </div>
+                        <div class="breath-box exhale">
+                            <span class="breath-tag">THỞ RA ⬆️</span>
+                            <p>Khi <strong>ĐẨY NGƯỜI LÊN</strong> (Dùng lực đẩy người lên - Pha dương)</p>
+                        </div>
+                    </div>
+                    <p class="guide-tip">💡 <em>Mẹo: Hít sâu bằng mũi khi hạ xuống và thở mạnh bằng miệng khi gồng đẩy người lên. Tuyệt đối không nín thở!</em></p>
+                </div>
+
+                <!-- SECTION 3: PUSHUP VARIATIONS -->
+                <div class="guide-card">
+                    <div class="guide-card-header">
+                        <span class="guide-card-icon">💪</span>
+                        <h3>3. Các Biến Thể Push-up Phổ Biến</h3>
+                    </div>
+                    
+                    <div class="variation-item">
+                        <div class="var-title-row">
+                            <h4>1. Standard Push-up (Chống đẩy tiêu chuẩn)</h4>
+                            <span class="var-badge badge-primary">Toàn thân</span>
+                        </div>
+                        <p><strong>Cách tập:</strong> Tay rộng bằng vai, thân người tạo thành đường thẳng từ đầu đến gót chân. Hạ ngực sát sàn rồi đẩy lên.</p>
+                        <p class="var-target">🎯 <em>Tác động: Cơ ngực giữa, cơ vai trước, tay sau.</em></p>
+                    </div>
+
+                    <div class="variation-item">
+                        <div class="var-title-row">
+                            <h4>2. Wide Push-up (Chống đẩy rộng tay)</h4>
+                            <span class="var-badge badge-secondary">Cơ ngực ngoài</span>
+                        </div>
+                        <p><strong>Cách tập:</strong> Đặt hai bàn tay rộng hơn khoảng cách vai 1.5 lần. Tập trung cảm nhận cơ ngực ép lại khi đẩy.</p>
+                        <p class="var-target">🎯 <em>Tác động: Tối đa vùng cơ ngực ngoài và vai.</em></p>
+                    </div>
+
+                    <div class="variation-item">
+                        <div class="var-title-row">
+                            <h4>3. Diamond Push-up (Chống đẩy kim cương)</h4>
+                            <span class="var-badge badge-warning">Tay sau & Ngực trong</span>
+                        </div>
+                        <p><strong>Cách tập:</strong> Đặt 2 tay chụm lại ngón trỏ và ngón cái tạo hình kim cương ngay dưới ngực.</p>
+                        <p class="var-target">🎯 <em>Tác động: Tập trung tối đa cơ tay sau (Triceps) và ngực trong.</em></p>
+                    </div>
+
+                    <div class="variation-item">
+                        <div class="var-title-row">
+                            <h4>4. Incline Push-up (Chống đẩy dốc lên)</h4>
+                            <span class="var-badge badge-success">Người mới tập</span>
+                        </div>
+                        <p><strong>Cách tập:</strong> Đặt tay lên vị trí cao hơn chân (ghế, bậc thang). Giảm áp lực trọng lượng thân người.</p>
+                        <p class="var-target">🎯 <em>Tác động: Ngực dưới, phù hợp khởi động hoặc người mới.</em></p>
+                    </div>
+
+                    <div class="variation-item">
+                        <div class="var-title-row">
+                            <h4>5. Decline Push-up (Chống đẩy dốc xuống)</h4>
+                            <span class="var-badge badge-danger">Nâng cao</span>
+                        </div>
+                        <p><strong>Cách tập:</strong> Đặt hai chân lên vị trí cao hơn tay (ghế, giường). Tăng độ khó cho ngực trên.</p>
+                        <p class="var-target">🎯 <em>Tác động: Tập trung mạnh vào ngực trên và cơ vai.</em></p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- SETUP SCREEN -->
         <div id="setup-screen" class="screen">
-            <h1>Workout Setup</h1>
+            <h1>Cài Đặt Buổi Tập</h1>
             <div class="input-group">
-                <label for="min-reps">Min Reps</label>
+                <label for="min-reps">Số Rep Tối Thiểu (Min)</label>
                 <input type="number" id="min-reps" value="5" min="1">
             </div>
             <div class="input-group">
-                <label for="step">Step (Increase/Decrease)</label>
+                <label for="step">Số Rep Gia / Giảm</label>
                 <input type="number" id="step" value="2" min="1">
             </div>
             <div class="input-group">
-                <label for="max-reps">Max Reps</label>
+                <label for="max-reps">Số Rep Tối Đa (Max)</label>
                 <input type="number" id="max-reps" value="15" min="1">
             </div>
-            <button id="btn-start" class="btn btn-primary">Start</button>
-            <button id="btn-back-dash" class="btn btn-secondary">Back to Dashboard</button>
+            <button id="btn-start-workout" class="btn btn-primary">Bắt Đầu Ngay 🚀</button>
+            <button id="btn-cancel-setup" class="btn btn-secondary">Quay Lại</button>
         </div>
 
         <!-- WORKOUT SCREEN -->
-        <div id="workout-screen" class="screen">
+        <div id="workout-screen" class="screen workout-active-screen">
             <h2 class="subtitle">Set <span id="set-number">1</span></h2>
             <div class="rep-display">
                 <span class="rep-count" id="target-reps">5</span>
@@ -75,40 +343,116 @@
             <div class="stopwatch-display">
                 <span id="stopwatch">00:00</span>
             </div>
-            <button id="btn-done" class="btn btn-action">Done (Start Rest)</button>
+            <div id="workout-pause-badge" class="pause-badge" style="display: none;">ĐANG TẠM DỪNG ⏸️</div>
+            <div class="action-buttons-row">
+                <button id="btn-pause-workout" class="btn btn-pause">Tạm Dừng ⏸️</button>
+                <button id="btn-done-workout" class="btn btn-action">Hoàn Thành (Nghỉ) ✅</button>
+            </div>
+            <button id="btn-cancel-workout" class="btn btn-cancel-workout">Hủy Buổi Tập 🚫</button>
         </div>
 
         <!-- REST SCREEN -->
-        <div id="rest-screen" class="screen">
-            <h2 class="subtitle">Rest Time</h2>
+        <div id="rest-screen" class="screen workout-active-screen">
+            <h2 class="subtitle">Thời Gian Nghỉ</h2>
             <div class="timer-display">
                 <span id="countdown">00:00</span>
             </div>
-            <p class="next-up">Next: <span id="next-reps">7</span> reps</p>
-            <button id="btn-skip-rest" class="btn btn-secondary">Skip Rest</button>
+            <p class="next-up">Lượt kế tiếp: <span id="next-reps">7</span> reps</p>
+            <div id="rest-pause-badge" class="pause-badge" style="display: none;">ĐANG TẠM DỪNG ⏸️</div>
+            <div class="action-buttons-row">
+                <button id="btn-pause-rest" class="btn btn-pause">Tạm Dừng ⏸️</button>
+                <button id="btn-skip-rest" class="btn btn-secondary">Bỏ Qua Nghỉ ⏩</button>
+            </div>
+            <button id="btn-cancel-rest" class="btn btn-cancel-workout">Hủy Buổi Tập 🚫</button>
         </div>
 
         <!-- FINISHED SCREEN -->
         <div id="finished-screen" class="screen">
-            <h1>Workout Complete!</h1>
+            <h1>Hoàn Thành Xuất Sắc! 🎉</h1>
             <div class="stats">
                 <div class="stat-item">
                     <span class="stat-value" id="total-reps">0</span>
-                    <span class="stat-label">Total Reps</span>
+                    <span class="stat-label">Tổng Push-up</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-value" id="total-time">00:00</span>
-                    <span class="stat-label">Total Time</span>
+                    <span class="stat-label">Tổng Thời Gian</span>
                 </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="total-calories">0</span>
+                    <span class="stat-label">Calo Đốt (kcal)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="finish-streak">0</span>
+                    <span class="stat-label">Streak (Ngày 🔥)</span>
             </div>
-            <button id="btn-save-finish" class="btn btn-primary">Save & Return</button>
+            <button id="btn-save-finish" class="btn btn-primary">Lưu & Về Bảng Xếp Hạng 🏆</button>
         </div>
 
+        <!-- FORGOT PASSWORD MODAL -->
+        <div id="forgot-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>🔑 Khôi Phục Mật Khẩu</h3>
+                    <button id="btn-close-forgot" class="btn-icon">✕</button>
+                </div>
+                <p class="modal-desc" style="font-size: 0.85rem; color: var(--text-muted);">Nhập Email bạn đã đăng ký để nhận mã xác nhận OTP (6 số):</p>
+                <div class="input-group" style="margin-top: 0.8rem;">
+                    <label for="forgot-email">Email đăng ký</label>
+                    <input type="email" id="forgot-email" placeholder="name@gmail.com">
+                </div>
+                <button id="btn-send-otp" class="btn btn-secondary">📩 Gửi Mã Xác Nhận (OTP)</button>
+                
+                <div id="forgot-step-2" style="display: none; margin-top: 1rem; border-top: 1px dashed var(--glass-border); padding-top: 1rem;">
+                    <div class="input-group">
+                        <label for="forgot-otp">Mã OTP (6 số trong Email)</label>
+                        <input type="text" id="forgot-otp" maxlength="6" placeholder="123456">
+                    </div>
+                    <div class="input-group">
+                        <label for="forgot-new-pass">Mật khẩu mới</label>
+                        <input type="password" id="forgot-new-pass" placeholder="Nhập mật khẩu mới">
+                    </div>
+                    <button id="btn-reset-pass-submit" class="btn btn-primary">✅ Xác Nhận Đổi Mật Khẩu</button>
+                </div>
+                <div id="forgot-status-msg" class="api-status-msg" style="display: none; margin-top: 0.5rem;"></div>
+            </div>
+        </div>
+
+        <!-- COMPARE MODAL -->
+        <div id="compare-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>⚔️ So Sánh Thành Tích</h3>
+                    <button id="btn-close-compare" class="btn-icon">✕</button>
+                </div>
+                <div class="compare-vs-header">
+                    <div class="compare-user-badge is-me">
+                        <span class="user-label">Bạn</span>
+                        <span id="compare-user-me" class="user-name">User</span>
+                    </div>
+                    <span class="vs-text">VS</span>
+                    <div class="compare-user-badge is-other">
+                        <span class="user-label">Đối thủ</span>
+                        <span id="compare-user-other" class="user-name">Other</span>
+                    </div>
+                </div>
+                <div class="compare-stats-grid">
+                    <div class="compare-stat-box">
+                        <span class="stat-num" id="compare-reps-me">0</span>
+                        <span class="stat-title">Reps (7 ngày)</span>
+                    </div>
+                    <div class="compare-stat-box">
+                        <span class="stat-num" id="compare-reps-other">0</span>
+                        <span class="stat-title">Reps (7 ngày)</span>
+                    </div>
+                </div>
+                <div class="compare-chart-container">
+                    <canvas id="compareChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Audio for beep -->
     <audio id="beep-audio" preload="auto"></audio>
-
     <script src="app.js"></script>
 </body>
 </html>
