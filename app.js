@@ -264,22 +264,30 @@ function computeWorkoutPlan() {
     const mode = modeSelect ? modeSelect.value : "pyramid_auto";
 
     if (mode === "fixed") {
-        const reps = parseInt(document.getElementById("fixed-reps").value, 10) || 20;
-        const sets = parseInt(document.getElementById("fixed-sets").value, 10) || 5;
+        const repsEl = document.getElementById("fixed-reps");
+        const setsEl = document.getElementById("fixed-sets");
+        const reps = repsEl ? (parseInt(repsEl.value, 10) || 20) : 20;
+        const sets = setsEl ? (parseInt(setsEl.value, 10) || 5) : 5;
         const plan = [];
         for (let i = 0; i < sets; i++) {
             plan.push(reps);
         }
         return { mode, plan, summary: `Tổng: ${reps * sets} reps (${sets} sets cố định x ${reps} reps)` };
     } else if (mode === "pyramid_manual") {
-        const min = parseInt(document.getElementById("min-reps").value, 10) || 5;
-        const step = parseInt(document.getElementById("step").value, 10) || 2;
-        const max = parseInt(document.getElementById("max-reps").value, 10) || 15;
+        const minEl = document.getElementById("min-reps");
+        const stepEl = document.getElementById("step");
+        const maxEl = document.getElementById("max-reps");
+
+        const min = minEl ? (parseInt(minEl.value, 10) || 5) : 5;
+        const step = stepEl ? (parseInt(stepEl.value, 10) || 2) : 2;
+        const max = maxEl ? (parseInt(maxEl.value, 10) || 15) : 15;
 
         const plan = [];
         let curr = min;
         let dir = 1;
-        while (true) {
+        let guard = 0;
+        while (guard < 100) {
+            guard++;
             plan.push(curr);
             if (dir === 1 && curr >= max) {
                 dir = -1;
@@ -292,8 +300,11 @@ function computeWorkoutPlan() {
         const total = plan.reduce((a, b) => a + b, 0);
         return { mode, plan, summary: `Tổng: ${total} reps (${plan.length} sets, Min: ${min}, Step: ${step}, Max: ${max})` };
     } else {
-        const targetReps = parseInt(document.getElementById("pyramid-target-reps").value, 10) || 100;
-        let targetSets = parseInt(document.getElementById("pyramid-target-sets").value, 10) || 5;
+        const targetRepsEl = document.getElementById("pyramid-target-reps");
+        const targetSetsEl = document.getElementById("pyramid-target-sets");
+
+        const targetReps = targetRepsEl ? (parseInt(targetRepsEl.value, 10) || 100) : 100;
+        let targetSets = targetSetsEl ? (parseInt(targetSetsEl.value, 10) || 5) : 5;
         if (targetSets % 2 === 0) targetSets += 1;
 
         const k = Math.ceil(targetSets / 2);
@@ -904,26 +915,35 @@ async function handleSaveSettings() {
 
 function openSetupScreen() {
     showScreen("setup");
-    let minVal = 5, stepVal = 2, maxVal = 15;
-    const savedManual = localStorage.getItem("pushup_last_manual_settings");
-    if (savedManual) {
-        try {
-            const parsed = JSON.parse(savedManual);
-            minVal = parsed.min || minVal;
-            stepVal = parsed.step || stepVal;
-            maxVal = parsed.max || maxVal;
-        } catch (e) {}
-    } else if (state.currentUser) {
-        minVal = state.currentUser.defaultMin || 5;
-        stepVal = state.currentUser.defaultStep || 2;
-        maxVal = state.currentUser.defaultMax || 15;
-    }
+    try {
+        let minVal = 5, stepVal = 2, maxVal = 15;
+        const savedManual = localStorage.getItem("pushup_last_manual_settings");
+        if (savedManual) {
+            try {
+                const parsed = JSON.parse(savedManual);
+                minVal = parsed.min || minVal;
+                stepVal = parsed.step || stepVal;
+                maxVal = parsed.max || maxVal;
+            } catch (e) {}
+        } else if (state.currentUser) {
+            minVal = state.currentUser.defaultMin || 5;
+            stepVal = state.currentUser.defaultStep || 2;
+            maxVal = state.currentUser.defaultMax || 15;
+        }
 
-    document.getElementById("min-reps").value = minVal;
-    document.getElementById("step").value = stepVal;
-    document.getElementById("max-reps").value = maxVal;
-    updateSetupVariationGuide();
-    updateWorkoutPlanPreview();
+        const minEl = document.getElementById("min-reps");
+        const stepEl = document.getElementById("step");
+        const maxEl = document.getElementById("max-reps");
+
+        if (minEl) minEl.value = minVal;
+        if (stepEl) stepEl.value = stepVal;
+        if (maxEl) maxEl.value = maxVal;
+
+        updateSetupVariationGuide();
+        updateWorkoutPlanPreview();
+    } catch (err) {
+        console.error("Error in openSetupScreen:", err);
+    }
 }
 
 function renderDashboardStats() {
