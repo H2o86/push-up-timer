@@ -389,9 +389,10 @@ function handleGoogleCredentialResponse(response) {
 window.handleGoogleCredentialResponse = handleGoogleCredentialResponse;
 
 function handleGoogleSignIn() {
-    if (window.google && window.google.accounts && window.google.accounts.id) {
+    const customClientId = localStorage.getItem("pushup_google_client_id") || state.googleClientId;
+    if (customClientId && window.google && window.google.accounts && window.google.accounts.id) {
         window.google.accounts.id.initialize({
-            client_id: "987654321000-dummyclientid.apps.googleusercontent.com",
+            client_id: customClientId,
             callback: handleGoogleCredentialResponse
         });
         window.google.accounts.id.prompt((notification) => {
