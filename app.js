@@ -1230,6 +1230,53 @@ function cancelWorkoutSession() {
     }
 }
 
+function getTempoRating(totalTimeSeconds, totalReps) {
+    const secPerRep = totalReps > 0 ? (totalTimeSeconds / totalReps) : 0;
+    const repsPerSec = totalTimeSeconds > 0 ? (totalReps / totalTimeSeconds) : 0;
+
+    if (secPerRep < 1.3) {
+        return {
+            badge: "🚀 FLY",
+            badgeClass: "badge-fly",
+            title: "Tốc Độ Quá Nhanh (Fly)",
+            secPerRep,
+            repsPerSec,
+            advice: "⚠️ Bạn đang chống đẩy quá nhanh (< 1.3s/rep). Dễ ăn bớt biên độ và dùng đà nảy cùi chỏ! Lời khuyên: Hãy hạ người xuống chậm hơn (1.5s - 2s) để ép căng cơ ngực và bảo vệ khớp vai & cùi chỏ.",
+            speakAdvice: "Lưu ý: Tốc độ tập của bạn rất nhanh. Hãy chú ý hạ người xuống chậm hơn để giữ đúng form và ép ngực tối đa."
+        };
+    } else if (secPerRep < 1.7) {
+        return {
+            badge: "⚡ HYPER",
+            badgeClass: "badge-hyper",
+            title: "Tốc Độ Nhanh (Hyper)",
+            secPerRep,
+            repsPerSec,
+            advice: "⚡ Tốc độ tập khá dồn dập (1.3s - 1.7s/rep). Nếu muốn tăng khối lượng và làm dày cơ ngực, hãy nhịp nhàng hạ người chậm rãi hơn một chút nhé!",
+            speakAdvice: "Nhịp tập khá dồn dập. Hãy chú ý kiểm soát pha hạ người xuống chậm rãi hơn một chút."
+        };
+    } else if (secPerRep <= 2.8) {
+        return {
+            badge: "💪 STANDARD",
+            badgeClass: "badge-standard",
+            title: "Nhịp Độ Chuẩn Vàng (Optimal)",
+            secPerRep,
+            repsPerSec,
+            advice: "🌟 Nhịp độ tuyệt vời (1.7s - 2.8s/rep)! Bạn đang kiểm soát pha hạ người và đẩy lên đúng kỹ thuật chuẩn Fitness. Cơ ngực & vai được kích hoạt hoàn hảo!",
+            speakAdvice: "Nhịp độ tập luyện chuẩn mực! Cơ ngực của bạn được gồng siết và kích hoạt hoàn hảo."
+        };
+    } else {
+        return {
+            badge: "🔥 HARD-CORE",
+            badgeClass: "badge-hardcore",
+            title: "Kiểm Soát Cơ Bắp Đỉnh Cao",
+            secPerRep,
+            repsPerSec,
+            advice: "🧱 Đỉnh cao kiểm soát cơ bắp (> 2.8s/rep)! Thời gian cơ chịu áp lực (Time Under Tension) cực lớn, giúp siết cơ nét căng và tăng sức mạnh tối đa.",
+            speakAdvice: "Phong cách Hard-Core đỉnh cao! Bạn có khả năng gồng siết cơ bắp cực kỳ trâu bò."
+        };
+    }
+}
+
 function showFinishedState() {
     releaseWakeLock();
     showScreen("finished");
@@ -1245,16 +1292,36 @@ function showFinishedState() {
     const streakData = calculateStreak(tempWorkouts, state.currentUser ? state.currentUser.username : "User");
     document.getElementById("finish-streak").innerText = streakData.currentStreak;
 
-    speakText(`Xuất sắc! Bạn đã hoàn thành ${state.totalReps} rep push up và đốt cháy ${Math.round(state.sessionCalories)} calo!`);
+    // EVALUATE TEMPO & FORM
+    const tempoInfo = getTempoRating(state.totalTimeSeconds, state.totalReps);
+    const badgeEl = document.getElementById("finish-tempo-badge");
+    const speedEl = document.getElementById("finish-tempo-speed");
+    const adviceEl = document.getElementById("finish-tempo-advice");
+
+    if (badgeEl) {
+        badgeEl.innerText = tempoInfo.badge;
+        badgeEl.className = `tempo-badge ${tempoInfo.badgeClass}`;
+    }
+    if (speedEl) {
+        speedEl.innerText = `${tempoInfo.secPerRep.toFixed(1)}s / rep (${tempoInfo.repsPerSec.toFixed(1)} rep/s)`;
+    }
+    if (adviceEl) {
+        adviceEl.innerText = tempoInfo.advice;
+    }
+
+    speakText(`Xuất sắc! Bạn đã hoàn thành ${state.totalReps} rep push up và đốt cháy ${Math.round(state.sessionCalories)} calo! ${tempoInfo.speakAdvice}`);
 }
 
 async function saveAndReturnToLeaderboard() {
+    const tempoInfo = getTempoRating(state.totalTimeSeconds, state.totalReps);
     const workoutRecord = {
         username: state.currentUser.username,
         reps: state.totalReps,
         timeSeconds: state.totalTimeSeconds,
         setsCount: state.setCount,
         calories: state.sessionCalories,
+        tempoBadge: tempoInfo.badge,
+        secPerRep: tempoInfo.secPerRep,
         date: new Date().toISOString()
     };
 

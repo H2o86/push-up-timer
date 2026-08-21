@@ -1151,6 +1151,80 @@ h2.subtitle {
     align-items: center;
 }
 
+/* TEMPO ANALYSIS CARD STYLES */
+.tempo-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 0.9rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.tempo-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.6rem;
+}
+
+.tempo-badge {
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 0.35rem 0.75rem;
+    border-radius: 10px;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tempo-badge.badge-fly {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.tempo-badge.badge-hyper {
+    background: linear-gradient(135deg, #f59e0b, #eab308);
+}
+
+.tempo-badge.badge-standard {
+    background: linear-gradient(135deg, #10b981, #06b6d4);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.tempo-badge.badge-hardcore {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+}
+
+.tempo-title-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.tempo-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.tempo-speed {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.tempo-advice-box {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.7rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--primary);
+}
+
 .var-title-row h4 {
     font-size: 0.85rem;
     font-weight: 700;
