@@ -716,64 +716,82 @@ function renderDashboardStats() {
         streakBadge.innerText = `🔥 ${streakData.currentStreak} ngày`;
     }
 
-    renderConsistencyChart(myWorkouts);
+    renderDashboardTop10AndMyRank(localData);
 }
 
-function renderConsistencyChart(workouts) {
-    const ctx = document.getElementById("consistencyChart").getContext("2d");
-    const dailyData = {};
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0];
-        dailyData[dateStr] = 0;
+async function renderDashboardTop10AndMyRank(localData) {
+    const top10Container = document.getElementById("dash-top10-container");
+    if (!top10Container) return;
+
+    let ranking = [];
+    const res = await callApi({ action: "getLeaderboard", period: "all" });
+
+    if (res && res.success && res.leaderboard && res.leaderboard.length > 0) {
+        ranking = res.leaderboard;
+    } else {
+        const userStats = {};
+        (localData.workouts || []).forEach(w => {
+            if (!userStats[w.username]) {
+                userStats[w.username] = { username: w.username, totalReps: 0, totalWorkouts: 0 };
+            }
+            userStats[w.username].totalReps += (w.reps || 0);
+            userStats[w.username].totalWorkouts += 1;
+        });
+        ranking = Object.values(userStats).sort((a, b) => b.totalReps - a.totalReps);
     }
 
-    workouts.forEach(w => {
-        const dateStr = (w.date || "").split("T")[0];
-        if (dailyData[dateStr] !== undefined) {
-            dailyData[dateStr] += w.reps;
-        }
-    });
+    const myUsername = state.currentUser ? state.currentUser.username : "";
+    const myIndex = ranking.findIndex(u => u.username && u.username.toLowerCase() === myUsername.toLowerCase());
+    
+    const myRankBadge = document.getElementById("my-rank-badge");
+    const myRankSub = document.getElementById("my-rank-sub");
+    const myRankReps = document.getElementById("my-rank-reps");
 
-    const sortedDates = Object.keys(dailyData).sort();
-    const labels = sortedDates.map(d => {
-        const dt = new Date(d);
-        return dt.toLocaleDateString("vi-VN", { weekday: "short", day: "numeric" });
-    });
-    const values = sortedDates.map(d => dailyData[d]);
+    if (myIndex !== -1) {
+        const rankNo = myIndex + 1;
+        let badgeText = `#${rankNo}`;
+        if (rankNo === 1) badgeText = "🥇 #1";
+        else if (rankNo === 2) badgeText = "🥈 #2";
+        else if (rankNo === 3) badgeText = "🥉 #3";
 
-    if (state.chartInstance) state.chartInstance.destroy();
+        if (myRankBadge) myRankBadge.innerText = badgeText;
+        if (myRankSub) myRankSub.innerText = `${ranking[myIndex].totalWorkouts || 0} buổi tập thành công`;
+        if (myRankReps) myRankReps.innerText = ranking[myIndex].totalReps || 0;
+    } else {
+        if (myRankBadge) myRankBadge.innerText = "#--";
+        if (myRankSub) myRankSub.innerText = "Hãy bắt đầu buổi tập đầu tiên!";
+        if (myRankReps) myRankReps.innerText = "0";
+    }
 
-    state.chartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Push-ups",
-                data: values,
-                backgroundColor: "rgba(6, 182, 212, 0.7)",
-                borderColor: "rgba(6, 182, 212, 1)",
-                borderWidth: 1,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { color: "#94a3b8" },
-                    grid: { color: "rgba(255, 255, 255, 0.05)" }
-                },
-                x: {
-                    ticks: { color: "#94a3b8" },
-                    grid: { display: false }
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
+    const top10 = ranking.slice(0, 10);
+    if (top10.length === 0) {
+        top10Container.innerHTML = '<div class="loading-spinner">Chưa có dữ liệu bài tập nào!</div>';
+        return;
+    }
+
+    top10Container.innerHTML = "";
+    top10.forEach((u, idx) => {
+        const isCurrent = myUsername && u.username.toLowerCase() === myUsername.toLowerCase();
+        let badge = `${idx + 1}`;
+        let badgeClass = "";
+        if (idx === 0) { badge = "🥇"; badgeClass = "rank-1"; }
+        else if (idx === 1) { badge = "🥈"; badgeClass = "rank-2"; }
+        else if (idx === 2) { badge = "🥉"; badgeClass = "rank-3"; }
+
+        const item = document.createElement("div");
+        item.className = `rank-item ${isCurrent ? "is-current-user" : ""}`;
+        item.innerHTML = `
+            <div class="rank-badge ${badgeClass}">${badge}</div>
+            <div class="rank-user-info">
+                <div class="rank-name">${u.username} ${isCurrent ? "(Bạn)" : ""}</div>
+                <div class="rank-sub">${u.totalWorkouts || 0} buổi tập</div>
+            </div>
+            <div class="rank-score">
+                <div class="rank-reps">${u.totalReps || 0}</div>
+                <div class="rank-sub">reps</div>
+            </div>
+        `;
+        top10Container.appendChild(item);
     });
 }
 

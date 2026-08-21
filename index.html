@@ -120,9 +120,32 @@
                         <span class="dash-label">Streak (Ngày)</span>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="consistencyChart"></canvas>
+                <!-- MY RANK CARD -->
+                <div class="my-rank-card" id="my-rank-card">
+                    <div class="my-rank-left">
+                        <span class="my-rank-badge" id="my-rank-badge">#--</span>
+                        <div class="my-rank-info">
+                            <span class="my-rank-title">Thứ Hạng Của Bạn</span>
+                            <span class="my-rank-sub" id="my-rank-sub">Đang tính toán...</span>
+                        </div>
+                    </div>
+                    <div class="my-rank-right">
+                        <span class="my-rank-reps" id="my-rank-reps">0</span>
+                        <span class="my-rank-label">reps</span>
+                    </div>
                 </div>
+
+                <!-- TOP 10 LEADERBOARD -->
+                <div class="dash-leaderboard-section">
+                    <div class="dash-section-header">
+                        <h3>🏆 Top 10 Bảng Xếp Hạng</h3>
+                        <span class="dash-section-sub">Tổng reps</span>
+                    </div>
+                    <div class="leaderboard-list dash-top10-list" id="dash-top10-container">
+                        <div class="loading-spinner">Đang tải dữ liệu Top 10... 🔄</div>
+                    </div>
+                </div>
+
                 <button id="btn-go-workout" class="btn btn-primary">Bắt Đầu Buổi Tập Mới 🔥</button>
             </div>
 
