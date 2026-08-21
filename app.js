@@ -769,11 +769,11 @@ function openMainScreen() {
     renderDashboardStats();
 }
 
+const ADMIN_EMAIL = "ha19.bqp@gmail.com";
+
 function isCurrentUserAdmin() {
-    if (!state.currentUser) return false;
-    const uname = (state.currentUser.username || "").toLowerCase();
-    const adminNames = ["admin", "h2o86", "ha19"];
-    return !!(state.currentUser.isAdmin || adminNames.includes(uname));
+    if (!state.currentUser || !state.currentUser.email) return false;
+    return state.currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase();
 }
 
 function updateAdminCardVisibility() {
@@ -785,20 +785,22 @@ function updateAdminCardVisibility() {
 
 function handleToggleAdminMode() {
     const card = document.getElementById("admin-api-card");
-    if (isCurrentUserAdmin()) {
-        if (card) {
-            const isShown = card.style.display !== "none";
-            card.style.display = isShown ? "none" : "flex";
-        }
-    } else {
-        const pin = prompt("🔑 Nhập Mật Khẩu / PIN Quản Trị (Admin):");
-        if (pin === "admin" || pin === "1234" || (state.currentUser && pin === state.currentUser.pin)) {
-            state.currentUser.isAdmin = true;
-            localStorage.setItem("pushup_current_user", JSON.stringify(state.currentUser));
-            updateAdminCardVisibility();
-            alert("🎉 Đã xác minh thành công! Đã bật Chế độ Quản Trị (Admin Mode).");
-        } else if (pin !== null) {
-            alert("❌ Mật khẩu Quản trị không chính xác!");
+    if (!isCurrentUserAdmin()) {
+        return alert("❌ Chế độ Quản Trị chỉ dành riêng cho tài khoản Admin chính thức (ha19.bqp@gmail.com)!");
+    }
+
+    if (card) {
+        const isShown = card.style.display !== "none";
+        if (isShown) {
+            card.style.display = "none";
+        } else {
+            const pass = prompt("🔑 Nhập Mật Khẩu Quản Trị (Admin Password):");
+            if (pass === "HA19@PushUp2026#" || pass === "admin" || (state.currentUser && pass === state.currentUser.pin)) {
+                card.style.display = "flex";
+                alert("🎉 Xác minh Admin thành công!");
+            } else if (pass !== null) {
+                alert("❌ Mật khẩu Quản trị không chính xác!");
+            }
         }
     }
 }
