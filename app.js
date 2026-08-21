@@ -259,11 +259,121 @@ document.addEventListener("DOMContentLoaded", () => {
     checkSavedLogin();
 });
 
+function computeWorkoutPlan() {
+    const modeSelect = document.getElementById("workout-mode-select");
+    const mode = modeSelect ? modeSelect.value : "pyramid_auto";
+
+    if (mode === "fixed") {
+        const reps = parseInt(document.getElementById("fixed-reps").value, 10) || 20;
+        const sets = parseInt(document.getElementById("fixed-sets").value, 10) || 5;
+        const plan = [];
+        for (let i = 0; i < sets; i++) {
+            plan.push(reps);
+        }
+        return { mode, plan, summary: `Tổng: ${reps * sets} reps (${sets} sets cố định x ${reps} reps)` };
+    } else if (mode === "pyramid_manual") {
+        const min = parseInt(document.getElementById("min-reps").value, 10) || 5;
+        const step = parseInt(document.getElementById("step").value, 10) || 2;
+        const max = parseInt(document.getElementById("max-reps").value, 10) || 15;
+
+        const plan = [];
+        let curr = min;
+        let dir = 1;
+        while (true) {
+            plan.push(curr);
+            if (dir === 1 && curr >= max) {
+                dir = -1;
+            }
+            curr += step * dir;
+            if (dir === -1 && curr < min) {
+                break;
+            }
+        }
+        const total = plan.reduce((a, b) => a + b, 0);
+        return { mode, plan, summary: `Tổng: ${total} reps (${plan.length} sets, Min: ${min}, Step: ${step}, Max: ${max})` };
+    } else {
+        const targetReps = parseInt(document.getElementById("pyramid-target-reps").value, 10) || 100;
+        let targetSets = parseInt(document.getElementById("pyramid-target-sets").value, 10) || 5;
+        if (targetSets % 2 === 0) targetSets += 1;
+
+        const k = Math.ceil(targetSets / 2);
+        let bestMin = 10;
+        let bestStep = 4;
+        let bestDiff = Infinity;
+
+        for (let stepVal = 1; stepVal <= 20; stepVal++) {
+            for (let minVal = 1; minVal <= 100; minVal++) {
+                const tempPlan = [];
+                for (let i = 1; i <= targetSets; i++) {
+                    const stepCount = i <= k ? (i - 1) : (targetSets - i);
+                    tempPlan.push(minVal + stepCount * stepVal);
+                }
+                const sum = tempPlan.reduce((a, b) => a + b, 0);
+                const diff = Math.abs(sum - targetReps);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestMin = minVal;
+                    bestStep = stepVal;
+                }
+            }
+        }
+
+        const bestPlan = [];
+        for (let i = 1; i <= targetSets; i++) {
+            const stepCount = i <= k ? (i - 1) : (targetSets - i);
+            bestPlan.push(bestMin + stepCount * bestStep);
+        }
+
+        const actualSum = bestPlan.reduce((a, b) => a + b, 0);
+        const maxRep = Math.max(...bestPlan);
+
+        return {
+            mode,
+            plan: bestPlan,
+            summary: `Mục tiêu: ${targetReps} reps • Tính toán thực tế: ${actualSum} reps (${targetSets} sets, Max: ${maxRep} reps/set)`
+        };
+    }
+}
+
+function updateWorkoutPlanPreview() {
+    const modeSelect = document.getElementById("workout-mode-select");
+    const mode = modeSelect ? modeSelect.value : "pyramid_auto";
+
+    const boxAuto = document.getElementById("mode-pyramid-auto-box");
+    const boxManual = document.getElementById("mode-pyramid-manual-box");
+    const boxFixed = document.getElementById("mode-fixed-box");
+
+    if (boxAuto) boxAuto.style.display = mode === "pyramid_auto" ? "flex" : "none";
+    if (boxManual) boxManual.style.display = mode === "pyramid_manual" ? "flex" : "none";
+    if (boxFixed) boxFixed.style.display = mode === "fixed" ? "flex" : "none";
+
+    const result = computeWorkoutPlan();
+    const seqEl = document.getElementById("preview-sequence");
+    const sumEl = document.getElementById("preview-summary");
+
+    if (seqEl) {
+        seqEl.innerText = result.plan.map((r, i) => `Set ${i + 1} (${r})`).join(" ➔ ");
+    }
+    if (sumEl) {
+        sumEl.innerText = result.summary;
+    }
+}
+
 function initEvents() {
     const varSelect = document.getElementById("setup-variation");
     if (varSelect) {
         varSelect.addEventListener("change", updateSetupVariationGuide);
     }
+
+    const modeSelect = document.getElementById("workout-mode-select");
+    if (modeSelect) {
+        modeSelect.addEventListener("change", updateWorkoutPlanPreview);
+    }
+
+    ["pyramid-target-reps", "pyramid-target-sets", "min-reps", "step", "max-reps", "fixed-reps", "fixed-sets"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", updateWorkoutPlanPreview);
+    });
     document.getElementById("tab-btn-login").addEventListener("click", () => setAuthMode("login"));
     document.getElementById("tab-btn-register").addEventListener("click", () => setAuthMode("register"));
     document.getElementById("btn-auth-submit").addEventListener("click", handleAuthSubmit);
@@ -794,6 +904,7 @@ function openSetupScreen() {
     document.getElementById("step").value = state.currentUser.defaultStep || 2;
     document.getElementById("max-reps").value = state.currentUser.defaultMax || 15;
     updateSetupVariationGuide();
+    updateWorkoutPlanPreview();
 }
 
 function renderDashboardStats() {
@@ -1200,34 +1311,13 @@ function calculateNextReps() {
 }
 
 function startWorkoutSession() {
-    state.minReps = parseInt(document.getElementById("min-reps").value, 10) || 5;
-    state.step = parseInt(document.getElementById("step").value, 10) || 2;
-    state.maxReps = parseInt(document.getElementById("max-reps").value, 10) || 15;
-
-    if (state.currentUser) {
-        state.currentUser.defaultMin = state.minReps;
-        state.currentUser.defaultStep = state.step;
-        state.currentUser.defaultMax = state.maxReps;
-        localStorage.setItem("pushup_current_user", JSON.stringify(state.currentUser));
-
-        const localData = getLocalData();
-        if (localData.users[state.currentUser.username]) {
-            localData.users[state.currentUser.username] = state.currentUser;
-            saveLocalData(localData);
-        }
-
-        callApi({
-            action: "updateSettings",
-            username: state.currentUser.username,
-            defaultMin: state.minReps,
-            defaultStep: state.step,
-            defaultMax: state.maxReps
-        });
-    }
+    const planRes = computeWorkoutPlan();
+    state.workoutPlan = planRes.plan;
+    state.workoutMode = planRes.mode;
+    state.currentSetIndex = 0;
 
     state.currentVariation = document.getElementById("setup-variation") ? document.getElementById("setup-variation").value : "standard";
-    state.currentReps = state.minReps;
-    state.direction = 1;
+    state.currentReps = state.workoutPlan[0];
     state.setCount = 1;
     state.totalReps = 0;
     state.totalTimeSeconds = 0;
@@ -1290,10 +1380,12 @@ function finishWorkoutSet() {
     clearInterval(state.timerInterval);
     state.totalReps += state.currentReps;
 
-    const nextReps = calculateNextReps();
-    if (state.direction === -1 && nextReps < state.minReps) {
+    state.currentSetIndex++;
+    if (state.currentSetIndex >= state.workoutPlan.length) {
         showFinishedState();
     } else {
+        state.setCount = state.currentSetIndex + 1;
+        const nextReps = state.workoutPlan[state.currentSetIndex];
         startRestState(nextReps, state.workoutSecondsElapsed);
     }
 }
@@ -1336,7 +1428,6 @@ function startRestState(nextReps, duration) {
                 screens.rest.classList.remove("warning");
 
                 state.currentReps = nextReps;
-                state.setCount++;
                 startWorkoutState();
             }
         }
@@ -1366,9 +1457,8 @@ function skipRest() {
     clearInterval(state.timerInterval);
     screens.rest.classList.remove("warning");
 
-    const nextReps = calculateNextReps();
-    state.currentReps = nextReps;
-    state.setCount++;
+    state.setCount = state.currentSetIndex + 1;
+    state.currentReps = state.workoutPlan[state.currentSetIndex];
     startWorkoutState();
 }
 

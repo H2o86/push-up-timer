@@ -1349,6 +1349,45 @@ h2.subtitle {
     line-height: 1.4;
 }
 
+/* WORKOUT MODE CONFIG & LIVE PREVIEW STYLES */
+.mode-config-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+}
+
+.workout-plan-preview {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.15));
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 14px;
+    padding: 0.8rem;
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.preview-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--secondary);
+}
+
+.preview-sequence {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.preview-summary {
+    font-size: 0.78rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
 .badge-primary { background: rgba(6, 182, 212, 0.2); color: var(--primary); }
 .badge-secondary { background: rgba(139, 92, 246, 0.2); color: var(--secondary); }
 .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }

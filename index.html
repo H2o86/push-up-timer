@@ -376,19 +376,64 @@
                 <div class="var-guide-reps" id="var-guide-reps">💡 Mục tiêu gợi ý: Min 5 - Max 20 reps / set</div>
             </div>
 
+            <!-- WORKOUT MODE SELECTOR -->
             <div class="input-group">
-                <label for="min-reps">Số Rep Tối Thiểu (Min)</label>
-                <input type="number" id="min-reps" value="5" min="1">
+                <label for="workout-mode-select">Chế Độ Tập Luyện ⚡</label>
+                <select id="workout-mode-select" class="custom-select">
+                    <option value="pyramid_auto" selected>🔺 Kim Tự Tháp - Tự Động (Theo Rep Mục Tiêu)</option>
+                    <option value="pyramid_manual">📐 Kim Tự Tháp - Thủ Công (Min, Step, Max)</option>
+                    <option value="fixed">📊 Tập Đều Cố Định (VD: 20 reps x 5 sets)</option>
+                </select>
             </div>
-            <div class="input-group">
-                <label for="step">Số Rep Gia / Giảm (Step)</label>
-                <input type="number" id="step" value="2" min="1">
+
+            <!-- MODE 1: PYRAMID AUTO (DEFAULT) -->
+            <div id="mode-pyramid-auto-box" class="mode-config-box">
+                <div class="input-group">
+                    <label for="pyramid-target-reps">Mục Tiêu Tổng Số Reps Buổi Tập</label>
+                    <input type="number" id="pyramid-target-reps" value="100" min="10" max="1000" step="5">
+                </div>
+                <div class="input-group">
+                    <label for="pyramid-target-sets">Số Set Tập Mục Tiêu (3, 5, 7, 9...)</label>
+                    <input type="number" id="pyramid-target-sets" value="5" min="3" max="15" step="2">
+                </div>
             </div>
-            <div class="input-group">
-                <label for="max-reps">Số Rep Tối Đa (Max)</label>
-                <input type="number" id="max-reps" value="15" min="1">
+
+            <!-- MODE 2: PYRAMID MANUAL -->
+            <div id="mode-pyramid-manual-box" class="mode-config-box" style="display: none;">
+                <div class="input-group">
+                    <label for="min-reps">Số Rep Tối Thiểu (Min)</label>
+                    <input type="number" id="min-reps" value="5" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="step">Số Rep Gia / Giảm (Step)</label>
+                    <input type="number" id="step" value="2" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="max-reps">Số Rep Tối Đa (Max)</label>
+                    <input type="number" id="max-reps" value="15" min="1">
+                </div>
             </div>
-            <button id="btn-start-workout" class="btn btn-primary">Bắt Đầu Ngay 🚀</button>
+
+            <!-- MODE 3: FIXED SETS -->
+            <div id="mode-fixed-box" class="mode-config-box" style="display: none;">
+                <div class="input-group">
+                    <label for="fixed-reps">Số Reps Mỗi Set (Cố định)</label>
+                    <input type="number" id="fixed-reps" value="20" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="fixed-sets">Tổng Số Set Tập</label>
+                    <input type="number" id="fixed-sets" value="5" min="1" max="20">
+                </div>
+            </div>
+
+            <!-- LIVE SET PREVIEW CARD -->
+            <div class="workout-plan-preview" id="workout-plan-preview">
+                <div class="preview-title">📋 Lịch Trình Chi Tiết Các Set Tập:</div>
+                <div class="preview-sequence" id="preview-sequence">Set 1 (16) ➔ Set 2 (22) ➔ Set 3 (28) ➔ Set 4 (22) ➔ Set 5 (16)</div>
+                <div class="preview-summary" id="preview-summary">Tổng: 104 reps • Max: 28 reps / set</div>
+            </div>
+
+            <button id="btn-start-workout" class="btn btn-primary" style="margin-top: 0.8rem;">Bắt Đầu Ngay 🚀</button>
             <button id="btn-cancel-setup" class="btn btn-secondary">Quay Lại</button>
         </div>
 
