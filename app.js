@@ -900,9 +900,24 @@ async function handleSaveSettings() {
 
 function openSetupScreen() {
     showScreen("setup");
-    document.getElementById("min-reps").value = state.currentUser.defaultMin || 5;
-    document.getElementById("step").value = state.currentUser.defaultStep || 2;
-    document.getElementById("max-reps").value = state.currentUser.defaultMax || 15;
+    let minVal = 5, stepVal = 2, maxVal = 15;
+    const savedManual = localStorage.getItem("pushup_last_manual_settings");
+    if (savedManual) {
+        try {
+            const parsed = JSON.parse(savedManual);
+            minVal = parsed.min || minVal;
+            stepVal = parsed.step || stepVal;
+            maxVal = parsed.max || maxVal;
+        } catch (e) {}
+    } else if (state.currentUser) {
+        minVal = state.currentUser.defaultMin || 5;
+        stepVal = state.currentUser.defaultStep || 2;
+        maxVal = state.currentUser.defaultMax || 15;
+    }
+
+    document.getElementById("min-reps").value = minVal;
+    document.getElementById("step").value = stepVal;
+    document.getElementById("max-reps").value = maxVal;
     updateSetupVariationGuide();
     updateWorkoutPlanPreview();
 }
@@ -1315,6 +1330,33 @@ function startWorkoutSession() {
     state.workoutPlan = planRes.plan;
     state.workoutMode = planRes.mode;
     state.currentSetIndex = 0;
+
+    const minVal = parseInt(document.getElementById("min-reps").value, 10) || 5;
+    const stepVal = parseInt(document.getElementById("step").value, 10) || 2;
+    const maxVal = parseInt(document.getElementById("max-reps").value, 10) || 15;
+
+    localStorage.setItem("pushup_last_manual_settings", JSON.stringify({ min: minVal, step: stepVal, max: maxVal }));
+
+    if (state.currentUser) {
+        state.currentUser.defaultMin = minVal;
+        state.currentUser.defaultStep = stepVal;
+        state.currentUser.defaultMax = maxVal;
+        localStorage.setItem("pushup_current_user", JSON.stringify(state.currentUser));
+
+        const localData = getLocalData();
+        if (localData.users[state.currentUser.username]) {
+            localData.users[state.currentUser.username] = state.currentUser;
+            saveLocalData(localData);
+        }
+
+        callApi({
+            action: "updateSettings",
+            username: state.currentUser.username,
+            defaultMin: minVal,
+            defaultStep: stepVal,
+            defaultMax: maxVal
+        });
+    }
 
     state.currentVariation = document.getElementById("setup-variation") ? document.getElementById("setup-variation").value : "standard";
     state.currentReps = state.workoutPlan[0];
