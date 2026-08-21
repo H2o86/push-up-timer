@@ -400,7 +400,9 @@ function initEvents() {
     });
 
     document.getElementById("btn-logout").addEventListener("click", handleLogout);
-    document.getElementById("btn-go-workout").addEventListener("click", openSetupScreen);
+    document.querySelectorAll(".btn-go-workout-trigger").forEach(btn => {
+        btn.addEventListener("click", openSetupScreen);
+    });
     document.getElementById("btn-cancel-setup").addEventListener("click", () => showScreen("main"));
     document.getElementById("btn-start-workout").addEventListener("click", startWorkoutSession);
     document.getElementById("btn-refresh-rank").addEventListener("click", loadLeaderboard);
