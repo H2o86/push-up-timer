@@ -183,6 +183,73 @@ function formatTime(seconds) {
 
 const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbwzcgrJGP8beeRmfppSf9m5_eUwA-WM_5bSR3YrYZcA4n0rQ9VJfSTGbHXfhkmZcbzW/exec";
 
+const VARIATIONS_INFO = {
+    standard: {
+        name: "Standard Push-up",
+        icon: "🏋️",
+        target: "🎯 Tác động: Ngực giữa, vai trước & tay sau (Triceps)",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Hai tay mở rộng bằng vai, giữ lưng thẳng từ đầu đến gót. Hạ ngực xuống sát sàn 2s rồi đẩy dứt khoát lên.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 5 - Max 20 reps / set"
+    },
+    incline: {
+        name: "Incline Push-up",
+        icon: "📐",
+        target: "🎯 Tác động: Cơ ngực dưới & hỗ trợ khởi động nhẹ nhàng",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Đặt hai tay lên vị trí cao hơn chân (ghế, bậc thang). Giữ thẳng cột sống và hạ ngực chạm mép ghế.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 10 - Max 25 reps / set"
+    },
+    decline: {
+        name: "Decline Push-up",
+        icon: "📉",
+        target: "🎯 Tác động: Chuyên sâu Cơ ngực trên (Upper Chest) & Vai",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Đặt hai chân lên ghế cao hơn tay. Dồn trọng lượng lên thân trên, hạ trán sát sàn rồi gồng ngực đẩy lên.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 5 - Max 15 reps / set"
+    },
+    diamond: {
+        name: "Diamond Push-up",
+        icon: "💎",
+        target: "🎯 Tác động: Tay sau (Triceps) & Khe ngực trong (Inner Chest)",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Hai bàn tay chắp hình kim cương (ngón trỏ và ngón cái chạm nhau). Hạ ngực chạm vào giữa hai bàn tay.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 5 - Max 12 reps / set"
+    },
+    wide: {
+        name: "Wide Push-up",
+        icon: "👐",
+        target: "🎯 Tác động: Mở rộng Biên độ Ngực ngoài (Outer Chest)",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Đặt hai tay rộng gấp 1.5 lần vai. Ép mạnh cơ ngực ngoài để đẩy người lên.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 8 - Max 18 reps / set"
+    },
+    knee: {
+        name: "Knee Push-up",
+        icon: "🧎",
+        target: "🎯 Tác động: Ngực & Vai (Dành cho khởi động hoặc trợ lực)",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Chống hai gối xuống sàn, bắt chéo chân phía sau. Giữ từ đầu gối tới đầu thành đường thẳng.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 10 - Max 30 reps / set"
+    },
+    pike: {
+        name: "Pike Push-up",
+        icon: "💥",
+        target: "🎯 Tác động: Cơ Vai (Shoulders) & Cơ Tay Sau",
+        form: "<strong>Kỹ thuật chuẩn:</strong> Đẩy mông cao tạo hình chữ V ngược. Hạ đỉnh đầu hướng xuống sàn giữa hai tay rồi đẩy mạnh vai lên.",
+        repsGoal: "💡 Mục tiêu gợi ý: Min 5 - Max 15 reps / set"
+    }
+};
+
+function updateSetupVariationGuide() {
+    const select = document.getElementById("setup-variation");
+    if (!select) return;
+    const key = select.value || "standard";
+    const info = VARIATIONS_INFO[key] || VARIATIONS_INFO.standard;
+
+    const targetEl = document.getElementById("var-guide-target");
+    const formEl = document.getElementById("var-guide-form");
+    const repsEl = document.getElementById("var-guide-reps");
+
+    if (targetEl) targetEl.innerText = info.target;
+    if (formEl) formEl.innerHTML = info.form;
+    if (repsEl) repsEl.innerText = info.repsGoal;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const savedApiUrl = localStorage.getItem("pushup_api_url");
     if (savedApiUrl) {
@@ -193,6 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initEvents() {
+    const varSelect = document.getElementById("setup-variation");
+    if (varSelect) {
+        varSelect.addEventListener("change", updateSetupVariationGuide);
+    }
     document.getElementById("tab-btn-login").addEventListener("click", () => setAuthMode("login"));
     document.getElementById("tab-btn-register").addEventListener("click", () => setAuthMode("register"));
     document.getElementById("btn-auth-submit").addEventListener("click", handleAuthSubmit);
@@ -722,6 +793,7 @@ function openSetupScreen() {
     document.getElementById("min-reps").value = state.currentUser.defaultMin || 5;
     document.getElementById("step").value = state.currentUser.defaultStep || 2;
     document.getElementById("max-reps").value = state.currentUser.defaultMax || 15;
+    updateSetupVariationGuide();
 }
 
 function renderDashboardStats() {
@@ -753,6 +825,81 @@ function renderDashboardStats() {
     }
 
     renderDashboardTop10AndMyRank(localData);
+    renderVariationDistribution(myWorkouts);
+}
+
+function renderVariationDistribution(myWorkouts) {
+    const listEl = document.getElementById("var-distribution-list");
+    const totalCountEl = document.getElementById("var-total-count");
+    const advisorEl = document.getElementById("var-advisor-box");
+    if (!listEl) return;
+
+    const counts = {
+        standard: 0,
+        incline: 0,
+        decline: 0,
+        diamond: 0,
+        wide: 0,
+        knee: 0,
+        pike: 0
+    };
+
+    let grandTotal = 0;
+    myWorkouts.forEach(w => {
+        const vKey = w.variation || "standard";
+        const reps = w.reps || 0;
+        if (counts[vKey] !== undefined) {
+            counts[vKey] += reps;
+        } else {
+            counts.standard += reps;
+        }
+        grandTotal += reps;
+    });
+
+    if (totalCountEl) totalCountEl.innerText = `${grandTotal} reps`;
+
+    if (grandTotal === 0) {
+        listEl.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">Chưa có dữ liệu bài tập nào!</div>';
+        if (advisorEl) advisorEl.innerHTML = "💡 <em>Hãy tập đa dạng các kiểu push-up để cơ ngực, vai và tay sau phát triển toàn diện!</em>";
+        return;
+    }
+
+    listEl.innerHTML = "";
+    const activeVariations = Object.keys(counts)
+        .map(k => ({ key: k, reps: counts[k], pct: Math.round((counts[k] / grandTotal) * 100) }))
+        .sort((a, b) => b.reps - a.reps);
+
+    activeVariations.forEach(item => {
+        if (item.reps > 0) {
+            const info = VARIATIONS_INFO[item.key] || { name: item.key, icon: "🏋️" };
+            const row = document.createElement("div");
+            row.className = "var-item-row";
+            row.innerHTML = `
+                <div class="var-item-meta">
+                    <span>${info.icon} ${info.name}: ${item.reps} reps</span>
+                    <span class="var-item-pct">${item.pct}%</span>
+                </div>
+                <div class="var-progress-bar">
+                    <div class="var-progress-fill" style="width: ${item.pct}%;"></div>
+                </div>
+            `;
+            listEl.appendChild(row);
+        }
+    });
+
+    const topVar = activeVariations[0];
+    let adviceText = "";
+
+    if (topVar && topVar.pct >= 70) {
+        const info = VARIATIONS_INFO[topVar.key] || { name: topVar.key };
+        adviceText = `💡 <strong>Lời khuyên cân bằng:</strong> Bạn đang dành đến ${topVar.pct}% bài tập cho <strong>${info.name}</strong>. Để tránh lệch nhóm cơ, hãy thử kết hợp thêm <strong>Decline Push-up (ngực trên)</strong> hoặc <strong>Pike Push-up (cơ vai)</strong> nhé!`;
+    } else if (activeVariations.filter(v => v.reps > 0).length >= 3) {
+        adviceText = `🌟 <strong>Tuyệt vời!</strong> Bạn đang phân phối rất đều giữa các kiểu push-up. Toàn bộ cơ ngực trên, ngực dưới, vai và tay sau đều được kích hoạt toàn diện!`;
+    } else {
+        adviceText = `💡 <strong>Mẹo luyện tập:</strong> Hãy thử thách bản thân với <strong>Diamond Push-up</strong> (tăng cơ tay sau) hoặc <strong>Decline Push-up</strong> (tập trung ngực trên) trong buổi tập tới!`;
+    }
+
+    if (advisorEl) advisorEl.innerHTML = adviceText;
 }
 
 async function renderDashboardTop10AndMyRank(localData) {
@@ -1078,6 +1225,7 @@ function startWorkoutSession() {
         });
     }
 
+    state.currentVariation = document.getElementById("setup-variation") ? document.getElementById("setup-variation").value : "standard";
     state.currentReps = state.minReps;
     state.direction = 1;
     state.setCount = 1;
@@ -1096,11 +1244,15 @@ function startWorkoutState() {
     document.getElementById("set-number").innerText = state.setCount;
     document.getElementById("target-reps").innerText = state.currentReps;
     
+    const vInfo = VARIATIONS_INFO[state.currentVariation] || VARIATIONS_INFO.standard;
+    const varBadgeEl = document.getElementById("workout-var-name");
+    if (varBadgeEl) varBadgeEl.innerText = `${vInfo.icon} ${vInfo.name}`;
+
     state.isPaused = false;
     state.workoutSecondsElapsed = 0;
     updateWorkoutPauseUI();
 
-    speakText(`Set ${state.setCount}. ${state.currentReps} reps. Bắt đầu!`);
+    speakText(`Set ${state.setCount}. ${state.currentReps} reps ${vInfo.name}. Bắt đầu!`);
 
     const stopwatch = document.getElementById("stopwatch");
     stopwatch.innerText = formatTime(state.workoutSecondsElapsed);
@@ -1322,6 +1474,7 @@ async function saveAndReturnToLeaderboard() {
         calories: state.sessionCalories,
         tempoBadge: tempoInfo.badge,
         secPerRep: tempoInfo.secPerRep,
+        variation: state.currentVariation || "standard",
         date: new Date().toISOString()
     };
 

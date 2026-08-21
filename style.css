@@ -1238,6 +1238,117 @@ h2.subtitle {
     font-weight: 700;
 }
 
+/* CUSTOM SELECT & VARIATION GUIDE STYLES */
+.custom-select {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.custom-select option {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.5rem;
+}
+
+.variation-guide-card {
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 14px;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.var-guide-target {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.var-guide-form {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+}
+
+.var-guide-reps {
+    font-size: 0.75rem;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+/* DASHBOARD VARIATION DISTRIBUTION SECTION */
+.dash-variation-section {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 0.7rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.var-distribution-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.var-item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.var-item-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.var-item-pct {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.var-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.var-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.var-advisor-box {
+    font-size: 0.78rem;
+    color: #e2e8f0;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    line-height: 1.4;
+}
+
 .badge-primary { background: rgba(6, 182, 212, 0.2); color: var(--primary); }
 .badge-secondary { background: rgba(139, 92, 246, 0.2); color: var(--secondary); }
 .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
