@@ -234,6 +234,7 @@ function initEvents() {
     document.getElementById("btn-send-otp").addEventListener("click", handleSendOtp);
     document.getElementById("btn-reset-pass-submit").addEventListener("click", handleResetPasswordSubmit);
 
+    document.getElementById("btn-toggle-admin").addEventListener("click", handleToggleAdminMode);
     document.getElementById("btn-save-api").addEventListener("click", handleSaveApiUrl);
     document.getElementById("btn-reset-api").addEventListener("click", handleResetApiUrl);
     document.getElementById("btn-test-api").addEventListener("click", handleTestApiConnection);
@@ -583,7 +584,42 @@ function openMainScreen() {
     document.getElementById("setting-voice-enable").checked = state.voiceCoachEnabled;
     document.getElementById("setting-api-url").value = state.apiUrl;
 
+    updateAdminCardVisibility();
     renderDashboardStats();
+}
+
+function isCurrentUserAdmin() {
+    if (!state.currentUser) return false;
+    const uname = (state.currentUser.username || "").toLowerCase();
+    const adminNames = ["admin", "h2o86", "ha19"];
+    return !!(state.currentUser.isAdmin || adminNames.includes(uname));
+}
+
+function updateAdminCardVisibility() {
+    const card = document.getElementById("admin-api-card");
+    if (card) {
+        card.style.display = isCurrentUserAdmin() ? "flex" : "none";
+    }
+}
+
+function handleToggleAdminMode() {
+    const card = document.getElementById("admin-api-card");
+    if (isCurrentUserAdmin()) {
+        if (card) {
+            const isShown = card.style.display !== "none";
+            card.style.display = isShown ? "none" : "flex";
+        }
+    } else {
+        const pin = prompt("🔑 Nhập Mật Khẩu / PIN Quản Trị (Admin):");
+        if (pin === "admin" || pin === "1234" || (state.currentUser && pin === state.currentUser.pin)) {
+            state.currentUser.isAdmin = true;
+            localStorage.setItem("pushup_current_user", JSON.stringify(state.currentUser));
+            updateAdminCardVisibility();
+            alert("🎉 Đã xác minh thành công! Đã bật Chế độ Quản Trị (Admin Mode).");
+        } else if (pin !== null) {
+            alert("❌ Mật khẩu Quản trị không chính xác!");
+        }
+    }
 }
 
 function handleSaveApiUrl() {
@@ -737,7 +773,14 @@ async function renderDashboardTop10AndMyRank(localData) {
             userStats[w.username].totalReps += (w.reps || 0);
             userStats[w.username].totalWorkouts += 1;
         });
-        ranking = Object.values(userStats).sort((a, b) => b.totalReps - a.totalReps);
+
+        Object.values(userStats).forEach(u => {
+            const st = calculateStreak(localData.workouts, u.username);
+            u.streak = st.currentStreak;
+            u.score = u.totalReps + (u.streak * 20);
+        });
+
+        ranking = Object.values(userStats).sort((a, b) => (b.score || b.totalReps) - (a.score || a.totalReps));
     }
 
     const myUsername = state.currentUser ? state.currentUser.username : "";
@@ -748,15 +791,18 @@ async function renderDashboardTop10AndMyRank(localData) {
     const myRankReps = document.getElementById("my-rank-reps");
 
     if (myIndex !== -1) {
+        const myItem = ranking[myIndex];
         const rankNo = myIndex + 1;
         let badgeText = `#${rankNo}`;
         if (rankNo === 1) badgeText = "🥇 #1";
         else if (rankNo === 2) badgeText = "🥈 #2";
         else if (rankNo === 3) badgeText = "🥉 #3";
 
+        const myStreak = myItem.streak !== undefined ? myItem.streak : calculateStreak(localData.workouts, myUsername).currentStreak;
+
         if (myRankBadge) myRankBadge.innerText = badgeText;
-        if (myRankSub) myRankSub.innerText = `${ranking[myIndex].totalWorkouts || 0} buổi tập thành công`;
-        if (myRankReps) myRankReps.innerText = ranking[myIndex].totalReps || 0;
+        if (myRankSub) myRankSub.innerText = `${myItem.totalWorkouts || 0} buổi • 🔥 ${myStreak} ngày streak`;
+        if (myRankReps) myRankReps.innerText = myItem.totalReps || 0;
     } else {
         if (myRankBadge) myRankBadge.innerText = "#--";
         if (myRankSub) myRankSub.innerText = "Hãy bắt đầu buổi tập đầu tiên!";
@@ -778,13 +824,15 @@ async function renderDashboardTop10AndMyRank(localData) {
         else if (idx === 1) { badge = "🥈"; badgeClass = "rank-2"; }
         else if (idx === 2) { badge = "🥉"; badgeClass = "rank-3"; }
 
+        const userStreak = u.streak !== undefined ? u.streak : calculateStreak(localData.workouts, u.username).currentStreak;
+
         const item = document.createElement("div");
         item.className = `rank-item ${isCurrent ? "is-current-user" : ""}`;
         item.innerHTML = `
             <div class="rank-badge ${badgeClass}">${badge}</div>
             <div class="rank-user-info">
                 <div class="rank-name">${u.username} ${isCurrent ? "(Bạn)" : ""}</div>
-                <div class="rank-sub">${u.totalWorkouts || 0} buổi tập</div>
+                <div class="rank-sub">${u.totalWorkouts || 0} buổi • 🔥 ${userStreak}d streak</div>
             </div>
             <div class="rank-score">
                 <div class="rank-reps">${u.totalReps || 0}</div>
@@ -826,10 +874,11 @@ async function loadLeaderboard() {
     let ranking = [];
     const res = await callApi({ action: "getLeaderboard", period });
 
+    const localData = getLocalData();
+
     if (res.success && res.leaderboard) {
         ranking = res.leaderboard;
     } else {
-        const localData = getLocalData();
         const userStats = {};
         localData.workouts.forEach(w => {
             if (isDateInPeriod(w.date, period)) {
@@ -840,7 +889,14 @@ async function loadLeaderboard() {
                 userStats[w.username].totalWorkouts += 1;
             }
         });
-        ranking = Object.values(userStats).sort((a, b) => b.totalReps - a.totalReps);
+
+        Object.values(userStats).forEach(u => {
+            const st = calculateStreak(localData.workouts, u.username);
+            u.streak = st.currentStreak;
+            u.score = u.totalReps + (u.streak * 20);
+        });
+
+        ranking = Object.values(userStats).sort((a, b) => (b.score || b.totalReps) - (a.score || a.totalReps));
     }
 
     if (ranking.length === 0) {
@@ -857,16 +913,18 @@ async function loadLeaderboard() {
         else if (idx === 1) { badge = "🥈"; badgeClass = "rank-2"; }
         else if (idx === 2) { badge = "🥉"; badgeClass = "rank-3"; }
 
+        const userStreak = u.streak !== undefined ? u.streak : calculateStreak(localData.workouts, u.username).currentStreak;
+
         const item = document.createElement("div");
         item.className = `rank-item ${isCurrent ? "is-current-user" : ""}`;
         item.innerHTML = `
             <div class="rank-badge ${badgeClass}">${badge}</div>
             <div class="rank-user-info">
                 <div class="rank-name">${u.username} ${isCurrent ? "(Bạn)" : ""}</div>
-                <div class="rank-sub">${u.totalWorkouts} buổi tập</div>
+                <div class="rank-sub">${u.totalWorkouts || 0} buổi • 🔥 ${userStreak}d streak</div>
             </div>
             <div class="rank-score">
-                <div class="rank-reps">${u.totalReps}</div>
+                <div class="rank-reps">${u.totalReps || 0}</div>
                 <div class="rank-sub">reps</div>
             </div>
             ${!isCurrent ? `<button class="btn-compare-action" data-username="${u.username}">⚔️ So sánh</button>` : ""}

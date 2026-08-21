@@ -170,6 +170,7 @@
             <div id="tab-settings" class="tab-content">
                 <div class="tab-header">
                     <h2>Cài Đặt Mặc Định ⚙️</h2>
+                    <button id="btn-toggle-admin" class="btn-icon" title="Mở Chế Độ Quản Trị (Admin)">🔑</button>
                 </div>
                 <div class="settings-card">
                     <p class="settings-desc">Cấu hình các chỉ số mặc định khi bạn bắt đầu một buổi tập mới:</p>
@@ -198,8 +199,8 @@
                     <button id="btn-save-settings" class="btn btn-primary" style="margin-top: 1rem;">Lưu Cài Đặt</button>
                 </div>
 
-                <!-- ADMIN API CONFIG CARD -->
-                <div class="settings-card admin-card" style="margin-top: 1rem;">
+                <!-- ADMIN API CONFIG CARD (CHỈ HIỂN THỊ KHI LÀ ADMIN) -->
+                <div class="settings-card admin-card" id="admin-api-card" style="margin-top: 1rem; display: none;">
                     <div class="admin-header">
                         <span class="admin-icon">🔑</span>
                         <div class="admin-title-box">
