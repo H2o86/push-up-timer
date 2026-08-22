@@ -444,6 +444,24 @@ function initEvents() {
 
     document.getElementById("btn-save-finish").addEventListener("click", saveAndReturnToLeaderboard);
     document.getElementById("btn-close-compare").addEventListener("click", closeCompareModal);
+
+    const btnOpenTop10 = document.getElementById("btn-open-top10-modal");
+    if (btnOpenTop10) btnOpenTop10.addEventListener("click", openTop10Modal);
+    
+    const myRankCard = document.getElementById("my-rank-card");
+    if (myRankCard) myRankCard.addEventListener("click", openTop10Modal);
+
+    const btnCloseTop10 = document.getElementById("btn-close-top10");
+    if (btnCloseTop10) btnCloseTop10.addEventListener("click", closeTop10Modal);
+
+    const btnGoFull = document.getElementById("btn-go-full-leaderboard");
+    if (btnGoFull) {
+        btnGoFull.addEventListener("click", () => {
+            closeTop10Modal();
+            const leaderboardNav = document.querySelector('.nav-item[data-tab="tab-leaderboard"]');
+            if (leaderboardNav) leaderboardNav.click();
+        });
+    }
 }
 
 function setAuthMode(mode) {
@@ -780,6 +798,7 @@ function openMainScreen() {
 
     updateAdminCardVisibility();
     renderDashboardStats();
+    syncUserDataFromServer();
 }
 
 const ADMIN_EMAIL = "ha19.bqp@gmail.com";
@@ -946,9 +965,51 @@ function openSetupScreen() {
     }
 }
 
-function renderDashboardStats() {
+async function syncUserDataFromServer() {
+    if (!state.currentUser || !state.currentUser.username) return;
+
+    try {
+        const [workoutsRes, leaderboardRes] = await Promise.all([
+            callApi({ action: "getUserWorkouts", username: state.currentUser.username }),
+            callApi({ action: "getLeaderboard", period: "all" })
+        ]);
+
+        let updatedLocal = false;
+        const localData = getLocalData();
+
+        if (workoutsRes && workoutsRes.success && Array.isArray(workoutsRes.workouts)) {
+            const existingKeys = new Set();
+            (localData.workouts || []).forEach(w => {
+                const k = `${(w.username || "").toLowerCase()}_${(w.date || "").split(".")[0]}_${w.reps}_${w.timeSeconds || 0}`;
+                existingKeys.add(k);
+            });
+
+            workoutsRes.workouts.forEach(sw => {
+                const k = `${(sw.username || "").toLowerCase()}_${(sw.date || "").split(".")[0]}_${sw.reps}_${sw.timeSeconds || 0}`;
+                if (!existingKeys.has(k)) {
+                    existingKeys.add(k);
+                    localData.workouts.push(sw);
+                    updatedLocal = true;
+                }
+            });
+        }
+
+        if (updatedLocal) {
+            saveLocalData(localData);
+        }
+
+        const leaderboardList = (leaderboardRes && leaderboardRes.leaderboard) ? leaderboardRes.leaderboard : null;
+        renderDashboardStats(leaderboardList);
+    } catch (err) {
+        console.warn("Background user data sync error:", err);
+    }
+}
+
+function renderDashboardStats(serverLeaderboard = null) {
+    if (!state.currentUser) return;
+
     const localData = getLocalData();
-    const myWorkouts = localData.workouts.filter(w => w.username === state.currentUser.username);
+    const myWorkouts = localData.workouts.filter(w => w.username && w.username.toLowerCase() === state.currentUser.username.toLowerCase());
 
     let totalReps = 0;
     let totalCalories = 0;
@@ -962,19 +1023,40 @@ function renderDashboardStats() {
         }
     });
 
+    let totalWorkoutsCount = myWorkouts.length;
     const streakData = calculateStreak(localData.workouts, state.currentUser.username);
+    let currentStreak = streakData.currentStreak;
+
+    if (serverLeaderboard && Array.isArray(serverLeaderboard)) {
+        const serverUser = serverLeaderboard.find(u => u.username && u.username.toLowerCase() === state.currentUser.username.toLowerCase());
+        if (serverUser) {
+            if (serverUser.totalReps && serverUser.totalReps > totalReps) {
+                totalReps = serverUser.totalReps;
+            }
+            if (serverUser.totalWorkouts && serverUser.totalWorkouts > totalWorkoutsCount) {
+                totalWorkoutsCount = serverUser.totalWorkouts;
+            }
+            const sCal = serverUser.calories || serverUser.totalCalories || Math.round(totalReps * (state.weight / 70) * 0.45);
+            if (sCal > totalCalories) {
+                totalCalories = sCal;
+            }
+            if (serverUser.streak !== undefined && serverUser.streak > currentStreak) {
+                currentStreak = serverUser.streak;
+            }
+        }
+    }
 
     document.getElementById("dash-total-reps").innerText = totalReps;
-    document.getElementById("dash-total-workouts").innerText = myWorkouts.length;
+    document.getElementById("dash-total-workouts").innerText = totalWorkoutsCount;
     document.getElementById("dash-total-calories").innerText = Math.round(totalCalories);
-    document.getElementById("dash-current-streak").innerText = streakData.currentStreak;
+    document.getElementById("dash-current-streak").innerText = currentStreak;
 
     const streakBadge = document.getElementById("header-streak-badge");
     if (streakBadge) {
-        streakBadge.innerText = `🔥 ${streakData.currentStreak} ngày`;
+        streakBadge.innerText = `🔥 ${currentStreak} ngày`;
     }
 
-    renderDashboardTop10AndMyRank(localData);
+    renderDashboardTop10AndMyRank(localData, serverLeaderboard);
     renderVariationDistribution(myWorkouts);
 }
 
@@ -1052,32 +1134,51 @@ function renderVariationDistribution(myWorkouts) {
     if (advisorEl) advisorEl.innerHTML = adviceText;
 }
 
-async function renderDashboardTop10AndMyRank(localData) {
-    const top10Container = document.getElementById("dash-top10-container");
-    if (!top10Container) return;
+function openTop10Modal() {
+    const modal = document.getElementById("top10-modal");
+    if (modal) {
+        modal.style.display = "flex";
+        const localData = getLocalData();
+        renderDashboardTop10AndMyRank(localData);
+    }
+}
+
+function closeTop10Modal() {
+    const modal = document.getElementById("top10-modal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+async function renderDashboardTop10AndMyRank(localData, preloadedLeaderboard = null) {
+    const top10Container = document.getElementById("modal-top10-container") || document.getElementById("dash-top10-container");
 
     let ranking = [];
-    const res = await callApi({ action: "getLeaderboard", period: "all" });
-
-    if (res && res.success && res.leaderboard && res.leaderboard.length > 0) {
-        ranking = res.leaderboard;
+    if (preloadedLeaderboard && Array.isArray(preloadedLeaderboard) && preloadedLeaderboard.length > 0) {
+        ranking = preloadedLeaderboard;
     } else {
-        const userStats = {};
-        (localData.workouts || []).forEach(w => {
-            if (!userStats[w.username]) {
-                userStats[w.username] = { username: w.username, totalReps: 0, totalWorkouts: 0 };
-            }
-            userStats[w.username].totalReps += (w.reps || 0);
-            userStats[w.username].totalWorkouts += 1;
-        });
+        const res = await callApi({ action: "getLeaderboard", period: "all" });
 
-        Object.values(userStats).forEach(u => {
-            const st = calculateStreak(localData.workouts, u.username);
-            u.streak = st.currentStreak;
-            u.score = u.totalReps + (u.streak * 20);
-        });
+        if (res && res.success && res.leaderboard && res.leaderboard.length > 0) {
+            ranking = res.leaderboard;
+        } else {
+            const userStats = {};
+            (localData.workouts || []).forEach(w => {
+                if (!userStats[w.username]) {
+                    userStats[w.username] = { username: w.username, totalReps: 0, totalWorkouts: 0 };
+                }
+                userStats[w.username].totalReps += (w.reps || 0);
+                userStats[w.username].totalWorkouts += 1;
+            });
 
-        ranking = Object.values(userStats).sort((a, b) => (b.score || b.totalReps) - (a.score || a.totalReps));
+            Object.values(userStats).forEach(u => {
+                const st = calculateStreak(localData.workouts, u.username);
+                u.streak = st.currentStreak;
+                u.score = u.totalReps + (u.streak * 20);
+            });
+
+            ranking = Object.values(userStats).sort((a, b) => (b.score || b.totalReps) - (a.score || a.totalReps));
+        }
     }
 
     const myUsername = state.currentUser ? state.currentUser.username : "";
@@ -1086,6 +1187,10 @@ async function renderDashboardTop10AndMyRank(localData) {
     const myRankBadge = document.getElementById("my-rank-badge");
     const myRankSub = document.getElementById("my-rank-sub");
     const myRankReps = document.getElementById("my-rank-reps");
+
+    const modalMyRankBadge = document.getElementById("modal-my-rank-badge");
+    const modalMyRankSub = document.getElementById("modal-my-rank-sub");
+    const modalMyRankReps = document.getElementById("modal-my-rank-reps");
 
     if (myIndex !== -1) {
         const myItem = ranking[myIndex];
@@ -1096,15 +1201,27 @@ async function renderDashboardTop10AndMyRank(localData) {
         else if (rankNo === 3) badgeText = "🥉 #3";
 
         const myStreak = myItem.streak !== undefined ? myItem.streak : calculateStreak(localData.workouts, myUsername).currentStreak;
+        const subText = `${myItem.totalWorkouts || 0} buổi • 🔥 ${myStreak} ngày streak`;
+        const repsText = myItem.totalReps || 0;
 
         if (myRankBadge) myRankBadge.innerText = badgeText;
-        if (myRankSub) myRankSub.innerText = `${myItem.totalWorkouts || 0} buổi • 🔥 ${myStreak} ngày streak`;
-        if (myRankReps) myRankReps.innerText = myItem.totalReps || 0;
+        if (myRankSub) myRankSub.innerText = subText;
+        if (myRankReps) myRankReps.innerText = repsText;
+
+        if (modalMyRankBadge) modalMyRankBadge.innerText = badgeText;
+        if (modalMyRankSub) modalMyRankSub.innerText = subText;
+        if (modalMyRankReps) modalMyRankReps.innerText = repsText;
     } else {
         if (myRankBadge) myRankBadge.innerText = "#--";
         if (myRankSub) myRankSub.innerText = "Hãy bắt đầu buổi tập đầu tiên!";
         if (myRankReps) myRankReps.innerText = "0";
+
+        if (modalMyRankBadge) modalMyRankBadge.innerText = "#--";
+        if (modalMyRankSub) modalMyRankSub.innerText = "Hãy bắt đầu buổi tập đầu tiên!";
+        if (modalMyRankReps) modalMyRankReps.innerText = "0";
     }
+
+    if (!top10Container) return;
 
     const top10 = ranking.slice(0, 10);
     if (top10.length === 0) {

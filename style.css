@@ -481,16 +481,7 @@ h2.subtitle {
 }
 
 .dash-leaderboard-section {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    padding: 0.7rem;
-    margin-bottom: 0.8rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-height: 250px;
-    overflow: hidden;
+    display: none !important;
 }
 
 .dash-section-header {
@@ -986,6 +977,89 @@ h2.subtitle {
 .btn-compare-action:hover {
     background: var(--secondary);
     color: #fff;
+}
+
+/* DASHBOARD TOP 10 CARD BUTTON STYLES */
+.dash-top10-btn-card {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 16px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);
+    margin-bottom: 0.8rem;
+}
+
+.dash-top10-btn-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
+    border-color: var(--warning);
+}
+
+.top10-btn-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.top10-icon {
+    font-size: 1.8rem;
+}
+
+.top10-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.top10-btn-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.top10-btn-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.btn-top10-action {
+    background: var(--warning);
+    color: #1e293b;
+    border: none;
+    border-radius: 10px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    transition: all 0.2s ease;
+}
+
+.btn-top10-action:hover {
+    background: #f59e0b;
+    transform: scale(1.04);
+}
+
+/* TOP 10 MODAL STYLES */
+.top10-modal-card {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.modal-my-rank {
+    margin-bottom: 0.5rem;
+}
+
+.modal-top10-list {
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 0.2rem;
 }
 
 /* ABOUT & AUTHOR CARD STYLES */

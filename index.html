@@ -136,15 +136,16 @@
                     </div>
                 </div>
 
-                <!-- TOP 10 LEADERBOARD -->
-                <div class="dash-leaderboard-section">
-                    <div class="dash-section-header">
-                        <h3>🏆 Top 10 Bảng Xếp Hạng</h3>
-                        <span class="dash-section-sub">Tổng reps</span>
+                <!-- TOP 10 CARD BUTTON -->
+                <div class="dash-top10-btn-card" id="btn-open-top10-modal">
+                    <div class="top10-btn-left">
+                        <span class="top10-icon">🏆</span>
+                        <div class="top10-btn-text">
+                            <span class="top10-btn-title">Top 10 Bảng Xếp Hạng</span>
+                            <span class="top10-btn-sub">Bấm để xem bảng vinh danh toàn hệ thống</span>
+                        </div>
                     </div>
-                    <div class="leaderboard-list dash-top10-list" id="dash-top10-container">
-                        <div class="loading-spinner">Đang tải dữ liệu Top 10... 🔄</div>
-                    </div>
+                    <button type="button" class="btn-top10-action">Xem Top 10 ➔</button>
                 </div>
 
                 <!-- VARIATION DISTRIBUTION & ADVISOR CARD -->
@@ -540,6 +541,37 @@
                     <button id="btn-reset-pass-submit" class="btn btn-primary">✅ Xác Nhận Đổi Mật Khẩu</button>
                 </div>
                 <div id="forgot-status-msg" class="api-status-msg" style="display: none; margin-top: 0.5rem;"></div>
+            </div>
+        </div>
+
+        <!-- TOP 10 MODAL -->
+        <div id="top10-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-card top10-modal-card">
+                <div class="modal-header">
+                    <h3>🏆 Top 10 Cao Thủ Push-up</h3>
+                    <button type="button" id="btn-close-top10" class="btn-icon">✕</button>
+                </div>
+                <!-- MY RANK SUMMARY INSIDE MODAL -->
+                <div class="my-rank-card modal-my-rank" id="modal-my-rank-card">
+                    <div class="my-rank-left">
+                        <span class="my-rank-badge" id="modal-my-rank-badge">#--</span>
+                        <div class="my-rank-info">
+                            <span class="my-rank-title">Thứ Hạng Của Bạn</span>
+                            <span class="my-rank-sub" id="modal-my-rank-sub">Đang tính toán...</span>
+                        </div>
+                    </div>
+                    <div class="my-rank-right">
+                        <span class="my-rank-reps" id="modal-my-rank-reps">0</span>
+                        <span class="my-rank-label">reps</span>
+                    </div>
+                </div>
+                <!-- TOP 10 LIST -->
+                <div class="leaderboard-list modal-top10-list" id="modal-top10-container">
+                    <div class="loading-spinner">Đang tải Top 10... 🔄</div>
+                </div>
+                <button type="button" id="btn-go-full-leaderboard" class="btn btn-secondary" style="margin-top: 0.4rem;">
+                    Bảng Xếp Hạng Đầy Đủ 🏆
+                </button>
             </div>
         </div>
 
